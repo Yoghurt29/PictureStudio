@@ -1,0 +1,10 @@
+﻿//打開cdr 失敗
+D:\Users\Trulon_chu\gitRepository\PictureStudiou\XnView\nconvert.exe -o D:\Users\Trulon_chu\gitRepository\PictureStudiou\work\58pic_520953254cea0.jpg -out jpeg -truecolors -in cdr -xall D:\Users\Trulon_Chu\Desktop\圖片工作室\c.cdr
+//打開AI
+D:\Users\Trulon_chu\gitRepository\PictureStudiou\XnView\nconvert.exe -o D:\Users\Trulon_chu\gitRepository\PictureStudiou\work\58pic_520953254cea0.jpg -out jpeg -truecolors -in ai D:\Users\Trulon_Chu\Desktop\圖片工作室\538da2cbb684e.ai
+//打開cdr 失敗
+D:\Users\Trulon_chu\gitRepository\PictureStudiou\XnView\nconvert.exe -o D:\Users\Trulon_chu\gitRepository\PictureStudiou\work\58pic_520953254cea0.jpg -out ai -in cdr D:\Users\Trulon_Chu\Desktop\圖片工作室\c.cdr
+//打開cdr 失敗
+D:\Users\Trulon_chu\gitRepository\PictureStudiou\XnView\nconvert.exe -o D:\Users\Trulon_chu\gitRepository\PictureStudiou\work\out.png -dpi 72 -out png -in cdr -xall D:\Users\Trulon_Chu\Desktop\圖片工作室\c.cdr
+//打開AI到png
+D:\Users\Trulon_chu\gitRepository\PictureStudiou\XnView\nconvert.exe -o D:\Users\Trulon_chu\gitRepository\PictureStudiou\work\58pic_520953254cea0.png -out png -truecolors -in ai D:\Users\Trulon_Chu\Desktop\圖片工作室\538da2cbb684e.ai

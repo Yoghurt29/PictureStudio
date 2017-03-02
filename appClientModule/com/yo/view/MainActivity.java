@@ -17,12 +17,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.yo.controller.IndexController;
+import com.yo.service.FileService;
 
 import javax.swing.JMenu;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.awt.event.ActionEvent;
 import javax.swing.JMenuItem;
@@ -57,12 +59,19 @@ public class MainActivity extends JFrame {
 				JFileChooser jFileChooser=new JFileChooser();
 				jFileChooser.showDialog(new JLabel(), "选择");  
 		        File file=jFileChooser.getSelectedFile();  
-		        if(file.isDirectory()){  
-		            System.out.println("文件夹:"+file.getAbsolutePath());  
+		        if(file.isDirectory()){
+		        	System.out.println("文件夹:"+file.getAbsolutePath()); 
+		        	//String rawUrl=file.getAbsolutePath();
+		        	//indexController.getPlayController().palyPicture(rawUrl);
+		        	//String url=indexController.getFileService().getModifiedPicturePath(file.getAbsolutePath());
+		        	//indexController.getPlayController().palyPicture(url);
 		        }else if(file.isFile()){  
-		            System.out.println("文件:"+file.getAbsolutePath());  
+		        	System.out.println("文件:"+file.getAbsolutePath());  
+		        	//String rawUrl=file.getAbsolutePath();
+		        	//indexController.getPlayController().palyPicture(rawUrl);
+		        	String url=indexController.getFileService().nconvertToJpg(file.getAbsolutePath(),file.getName().split("\\.")[0]+".jpg");
+		        	indexController.getPlayController().palyPicture(url);
 		        }  
-		        System.out.println(jFileChooser.getSelectedFile().getName());
 			}
 		});
 		menu.add(mntmNewMenuItem);
@@ -96,5 +105,11 @@ public class MainActivity extends JFrame {
 	public MainActivity(String title, GraphicsConfiguration gc) {
 		super(title, gc);
 		// TODO Auto-generated constructor stub
+	}
+	@Override
+	public void dispose() {
+		// TODO Auto-generated method stub
+		super.dispose();
+		System.out.println("dispose");
 	}
 }
