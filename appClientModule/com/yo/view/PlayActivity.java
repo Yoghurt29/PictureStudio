@@ -1,35 +1,103 @@
 package com.yo.view;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.FlowLayout;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.Image;
-import java.awt.Point;
+import java.awt.Paint;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.Toolkit;
-import java.awt.Window;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
+import java.awt.geom.RoundRectangle2D;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
-import javax.swing.JScrollPane;
+import javax.swing.UIManager;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.yo.pojo.Drawer;
+import com.yo.service.FileService;
 //TODO 考慮隱藏圖表來禁止點擊後介面隱藏,以及禁止鼠標移上來,修改鼠標位置
 @Component
 public class PlayActivity extends JFrame {	
+	public Drawer drawer;
+	public void playPictureWithSet(String url, double w,double h, double i, double j,boolean isBorder,boolean isShowInfo) {
+		Image image = FileService.getImage(url);
+		Dimension outputSize = FileService.getOutputSize(image, w,h, i, j);
+		this.getGraphics().clearRect(0, 0, this.getWidth(), this.getHeight());
+		
+		this.getGraphics().drawImage(image, 0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, 0, 0, image.getWidth(this),image.getHeight(this),this);
+		Graphics2D g2d=(Graphics2D) this.getGraphics();
+		
+		if(isBorder){
+			//邊框
+			g2d.setColor(new Color(255,0,0));  
+			Shape shape = null;  
+			shape = new RoundRectangle2D.Double(0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, 6.5D, 6.5D);  
+			g2d.draw(shape); 
+		}
+		if(isShowInfo){
+			/*Image imageInIo = null;
+			try {
+				imageInIo=ImageIO.read(new FileInputStream(url));
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			double imgMod=imageInIo.getWidth(null)/imageInIo.getHeight(null);
+			double actuallyMod=i/j;*/
+			g2d.drawString("寬"+i+"釐米,"+j+"釐米    ", (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1);
+		}
+	}
+	public void playBackgroundWithColor(final Color color){
+		//new Color(R, G, B, 200)
+		this.drawer=new Drawer() {
+			
+			@Override
+			public void draw(Graphics g, Image image, PicturePanel picturePanel) {
+				
+			}
+			
+			@Override
+			public void draw(Graphics g,java.awt.Component c) {
+				JFrame target=(JFrame) c;
+				int width=target.getWidth();
+				int heigth=target.getHeight();
+				final int R = 66;  
+				final int G = 194;  
+				final int B = 110;
+				Graphics2D g2d = (Graphics2D) g;  
+				// 设置画笔颜色，填充或描边  
+				final Paint p = new GradientPaint(0.0f, 0.0f, new Color(R, G, B, 100),  
+						50, 50, new Color(R, G, B, 200), true);  
+				// 设置画笔颜色为白色  繪製背景色
+				g2d.setPaint(p);  
+				g2d.setColor(color);  
+				g2d.fillRect(0, 0, width, heigth);  
+				
+				// 设置画笔颜色为蓝色   繪製邊框
+				/*g2d.setColor(new Color(41,141,208));  
+				Shape shape = null;  
+				shape = new RoundRectangle2D.Double(0, 0, width, heigth, 6.5D, 6.5D);  
+				g2d.draw(shape);*/ 
+			}
+
+		};
+		
+	}
     public void playPicture(String imgPath) {  
         //picturePanel.setImagePath(imgPath);  
         //實際展示尺寸,根據品目尺寸計算
@@ -47,10 +115,8 @@ public class PlayActivity extends JFrame {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	this.getGraphics().drawImage(image, 0, 0,image.getWidth(this),image.getWidth(this),Color.blue,this);
-    	this.getGraphics().drawString("原始比例", 100, 100);
-    	this.getGraphics().drawString("hello", 200, 100);
-    	this.getGraphics().drawString("java", 300, 100);
+    	this.getGraphics().drawImage(image, 0, 0,image.getWidth(this),image.getHeight(this),Color.black,this);
+    	this.getGraphics().drawString("原始比例 "+image.getWidth(this)+","+image.getHeight(this), image.getWidth(this), image.getHeight(this));
     }  
 	@Override
 	protected void processWindowEvent(WindowEvent e) {
@@ -64,16 +130,18 @@ public class PlayActivity extends JFrame {
 	@Override
 	protected void frameInit() {
 		super.frameInit();
-		this.setLayout(new FlowLayout()); 
+		this.setLayout(null); 
 	        /** 
 	         * true无边框 全屏显示 
 	         * false有边框 全屏显示 
 	         */ 
-	        this.setUndecorated(true); 
+	        this.setUndecorated(true);
+			//this.getRootPane().setbu
+			//UIManager.put(this.getRootPane().set;, "false");
 	        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); 
 	        Rectangle bounds = new Rectangle(screenSize); 
 	        this.setBounds(bounds); 
-	        this.setExtendedState(this.MAXIMIZED_BOTH); 
+	        //this.setExtendedState(this.MAXIMIZED_BOTH); 
 	        this.setAlwaysOnTop(true);	        
 	}
 	public PlayActivity() throws HeadlessException {
@@ -93,5 +161,26 @@ public class PlayActivity extends JFrame {
 	public PlayActivity(String title, GraphicsConfiguration gc) {
 		super(title, gc);
 		// TODO Auto-generated constructor stub
+	}
+	@Override
+	public void paint(Graphics g) {
+		// TODO Auto-generated method stub
+		//super.paint(g);
+		if(null!=drawer)
+		drawer.draw(g,this);
+	}
+	@Override
+	public void update(Graphics g) {
+		drawer.draw(g,this);
+	}
+	@Override
+	public void paintComponents(Graphics g) {
+		drawer.draw(g,this);
+	}
+	public Drawer getDrawer() {
+		return drawer;
+	}
+	public void setDrawer(Drawer drawer) {
+		this.drawer = drawer;
 	}
 }

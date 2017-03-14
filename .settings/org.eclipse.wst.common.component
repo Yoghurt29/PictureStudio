@@ -2,6 +2,7 @@
     <wb-module deploy-name="PictureStudiou">
         <wb-resource deploy-path="/" source-path="/appClientModule" tag="defaultRootSource"/>
         <wb-resource deploy-path="/" source-path="/source"/>
+        <wb-resource deploy-path="/" source-path="/bin"/>
         <property name="java-output-path" value="/PictureStudiou/build/classes"/>
     </wb-module>
 </project-modules>
