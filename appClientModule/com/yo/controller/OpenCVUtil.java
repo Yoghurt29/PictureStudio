@@ -1,7 +1,10 @@
 package com.yo.controller;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -30,7 +33,9 @@ public class OpenCVUtil {
 		Mat matIn = Imgcodecs.imread(inputPath);
 		Mat mat1 = doCanny(matIn);
 		Mat mat2 = colorReplace(mat1,edgeColor,backColor);
-		Imgcodecs.imwrite(inputPath+OpenCVUtil.PROCESS_CHAGEBACKCOLORANDEDGECOLORANDGETEDGE, mat2);
+		//加粗
+		Mat mat3=boldPoint(mat2, 4);
+		Imgcodecs.imwrite(inputPath+OpenCVUtil.PROCESS_CHAGEBACKCOLORANDEDGECOLORANDGETEDGE, mat3);
 		return inputPath+OpenCVUtil.PROCESS_CHAGEBACKCOLORANDEDGECOLORANDGETEDGE;
 	}
 	public static String getEdge(String inputPath){
@@ -107,9 +112,33 @@ public class OpenCVUtil {
     	}
     	return imgSrc;
     }
-    public void boldPoint(Mat imgSrc,List<double[]> points){
-    	for (double[] ds : points) {
-			
+    public static Mat boldPoint(Mat imgSrc,int lineWidth){
+    	HashMap<int[],double[]> points=new HashMap<>();
+    	
+    	for (int y = 0; y < imgSrc.height(); y++)
+    	{
+    		for (int x = 0; x < imgSrc.width(); x++)
+    		{
+    			//得到不為0的像素点值
+    			double[] data = imgSrc.get(y,x);
+    			int[] point=new int[2];
+    			if(data[0]>0||data[1]>0||data[2]>0){
+    				point[0]=y;
+    				point[1]=x;
+    				points.put(point, data);
+    			}
+    		}
+    	}
+    	Set<int[]> keySet = points.keySet();
+    	for (int[] ds : keySet) {
+    		int y=ds[0];
+    		int x=ds[1];
+			for(int iy=y-lineWidth;iy<=y+lineWidth;iy++){
+				for(int ix=x-lineWidth;ix<=x+lineWidth;ix++){
+					imgSrc.put(iy,ix,points.get(ds));
+				}
+			}
 		}
+    	return imgSrc;
     }
 }
