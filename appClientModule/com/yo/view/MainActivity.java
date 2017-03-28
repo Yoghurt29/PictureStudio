@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.yo.controller.IndexController;
+import com.yo.controller.OpenCVUtil;
 import com.yo.pojo.Drawer;
 import com.yo.service.FileService;
 
@@ -43,17 +44,25 @@ import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.awt.event.ActionEvent;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Button;
+
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+
 import java.awt.GridLayout;
 import java.awt.FlowLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
 import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
@@ -77,8 +86,15 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JToggleButton;
 import javax.swing.JRadioButton;
+import java.awt.event.MouseMotionAdapter;
 @Component
 public class MainActivity extends JFrame {
+	protected static final String IMAGEOUTPUTATTRIBUTES_EDGECOLOR = "edgeColor";
+	protected static final String IMAGEOUTPUTATTRIBUTES_ISGETEDGE = null;
+	static public String IMAGEOUTPUTATTRIBUTES_ISBORDER="isBorder";
+	static public String IMAGEOUTPUTATTRIBUTES_ISSHOWINFO="isShowInfo";
+	static public String IMAGEOUTPUTATTRIBUTES_ISCUT="isCut";
+	static public String IMAGEOUTPUTATTRIBUTES_CUTLOCATION="cutLocation";
 	@Autowired
 	private IndexController indexController;
 	private PicturePanel previewPicturePanel=null;
@@ -90,6 +106,8 @@ public class MainActivity extends JFrame {
 	private	JCheckBox heightCheckbox;
 	public String activeImagePath;
 	public Image activeImage;
+	//存放輸出設置,包括裁剪位置,opvc參數等
+	public HashMap<String, Object> imageOutputAttributes =new HashMap<String,Object>();
 	private JTextArea textAreaSetScreenValueInfo;
 	private JTextField textField_2;
 	private JTextField textField_3;
@@ -97,6 +115,7 @@ public class MainActivity extends JFrame {
 	private JCheckBox isBorderCheckBox;
 	private JCheckBox isShowPictureInfoCheckBox;
 	private JPanel aboutPanel;
+	private JButton outputButton;
 
 	@Override
 	protected void frameInit() {
@@ -230,6 +249,8 @@ public class MainActivity extends JFrame {
 		return url;
 	}
 	public MainActivity() throws HeadlessException {
+		final JLabel leftCut=new JLabel();
+		final JLabel rightCut=new JLabel();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setTitle(Messages.getString("mainActivityTitle")); //$NON-NLS-1$
 		setIconImage(Toolkit.getDefaultToolkit().getImage(MainActivity.class.getResource("/ico/icon.png")));
@@ -266,6 +287,55 @@ public class MainActivity extends JFrame {
 				workPanel.setLayout(null);
 
 				PicturePanel panel_1 = new PicturePanel();
+				panel_1.addMouseListener(new MouseAdapter() {
+					/**
+					 * FIXME 完成鼠標按下開始繪製矩形,彈起時取得座標 按鈕按下裁剪則按座標展示圖片
+					 */
+					int[] location=new int[4];
+					@Override
+					public void mousePressed(MouseEvent arg0) {
+						location[0]=arg0.getX();
+						location[1]=arg0.getY();
+						
+						
+						leftCut.setIcon(new ImageIcon(MainActivity.class.getResource("/ico/leftCut.png")));
+						leftCut.setBounds(0, 0, 100, 100);
+						leftCut.setLocation(location[0]-40, location[1]-40);
+						previewPicturePanel.add(leftCut);
+						
+						System.out.println("鼠標按下"+arg0.getX()+","+arg0.getY());
+					}
+					@Override
+					public void mouseReleased(MouseEvent arg0) {
+						location[2]=arg0.getX();
+						location[3]=arg0.getY();
+						
+						rightCut.setIcon(new ImageIcon(MainActivity.class.getResource("/ico/rightCut.png")));
+						rightCut.setBounds(0, 0, 100, 100);
+						rightCut.setLocation(location[2]-60, location[3]-60);
+						previewPicturePanel.add(rightCut);
+						
+						System.out.println("鼠標彈起"+arg0.getX()+","+arg0.getY());
+						//getImageOutputAttributes().put(MainActivity.IMAGEOUTPUTATTRIBUTES_ISCUT, true);
+						getImageOutputAttributes().put(MainActivity.IMAGEOUTPUTATTRIBUTES_CUTLOCATION, location);
+						if(null==getImageOutputAttributes().get(MainActivity.IMAGEOUTPUTATTRIBUTES_ISCUT)||!(boolean) getImageOutputAttributes().get(MainActivity.IMAGEOUTPUTATTRIBUTES_ISCUT)){
+							Toolkit.getDefaultToolkit().beep();
+							JOptionPane.showMessageDialog(null, "若需裁剪,請先點擊手動裁剪按鈕!", "提示", JOptionPane.WARNING_MESSAGE);
+							leftCut.setIcon(null);
+							rightCut.setIcon(null);
+						}else{
+							outputButton.doClick();
+						}
+					}
+				});
+				panel_1.addMouseMotionListener(new MouseMotionAdapter() {
+					@Override
+					public void mouseMoved(MouseEvent arg0) {
+						double x=arg0.getLocationOnScreen().getX();
+						double y=arg0.getLocationOnScreen().getY();
+						System.out.println("鼠標位置:"+x+","+y);
+					}
+				});
 				panel_1.setBackground(Color.GRAY);
 				panel_1.setBounds(0, 31, 800, 450);
 				panel_1.setLayout(null);
@@ -339,9 +409,9 @@ public class MainActivity extends JFrame {
 				panel_3.setLayout(null);
 				
 				JPanel panel_2 = new JPanel();
-				panel_2.setBounds(37, 209, 195, 214);
+				panel_2.setBounds(37, 10, 195, 150);
 				panel_3.add(panel_2);
-				panel_2.setBorder(new TitledBorder(new LineBorder(new Color(67, 78, 84), 2, true), "\u5C3A\u5BF8\u8ABF\u6574", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+				panel_2.setBorder(new TitledBorder(new LineBorder(new Color(67, 78, 84), 2, true), "\u8F38\u51FA\u5C3A\u5BF8\u8ABF\u6574", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
 				panel_2.setLayout(null);
 				
 				widthCheckbox = new JCheckBox(Messages.getString("MainActivity.checkBox.text")); //$NON-NLS-1$
@@ -457,72 +527,33 @@ public class MainActivity extends JFrame {
 				lblCm.setBounds(164, 75, 31, 15);
 				panel_2.add(lblCm);
 				
-				JButton button = new JButton(Messages.getString("MainActivity.button.text_1")); //$NON-NLS-1$
-				button.setFont(new Font("新細明體", Font.BOLD, 16));
-				button.setIcon(new ImageIcon(MainActivity.class.getResource("/ico/play64.png")));
-				button.setForeground(new Color(0, 0, 0));
-				button.setBackground(new Color(210, 105, 30));
-				button.addActionListener(new ActionListener() {
-					/*
-					 * XXX
-					 * 獲取參數
-					 */
-					public void actionPerformed(ActionEvent arg0) {
-						//投影儀尺寸
-						int playActivityHeight=indexController.getPlayActivity().getHeight();
-						int playActivityWidth=indexController.getPlayActivity().getWidth();
-						//最大輸出到地面尺寸 單位釐米 根據校準參數計算得到
-						double maxInputWidthSize = (playActivityWidth/800.0)*IndexController.screenSetWidth;
-						double maxInputHeightSize = (playActivityHeight/450.0)*IndexController.screenSetHeight;
-						//
-						boolean isWidthSelected = indexController.getMainActivity().getWidthCheckbox().isSelected();
-						boolean isHeightSelected = indexController.getMainActivity().getHeightCheckbox().isSelected();
-
-						String info="";
-						info+="投影儀器尺寸為:"+playActivityWidth+","+playActivityHeight;
-						info+="\r\n最大輸出到地面尺寸為:"+Math.round((maxInputWidthSize*10))/10.0+"cm,"+Math.round((maxInputHeightSize*10))/10.0+"cm ";
-						info+="\r\n校準參數為:"+IndexController.screenSetWidth+"cm,"+IndexController.screenSetHeight+"cm";
-						info+="\r\n(800*450對應的實際尺寸)";
-						double inputWidthSize=0;
-						double inputHeightSize=0;
-						try {
-							//用戶輸入的尺寸 單位釐米
-							inputWidthSize= Double.parseDouble(indexController.getMainActivity().getTextField().getText());
-							inputHeightSize= Double.parseDouble(indexController.getMainActivity().getTextField_1().getText());
-						} catch (Exception e) {
-							Toolkit.getDefaultToolkit().beep();
-							JOptionPane.showMessageDialog(null, indexController.getMainActivity().getTextField().getText()+","+indexController.getMainActivity().getTextField_1().getText()+"  不是一組合法的寬高值,請檢查輸入尺寸,數字或小數,單位釐米!","請檢查輸入", JOptionPane.WARNING_MESSAGE);
-						}
-						if(inputWidthSize>maxInputWidthSize||inputHeightSize>maxInputHeightSize){
-							Toolkit.getDefaultToolkit().beep();
-							JOptionPane.showMessageDialog(null, info, "輸入尺寸過大!", JOptionPane.WARNING_MESSAGE);
-							return;
-						}
-						boolean isBorder=indexController.getMainActivity().getIsBorderCheckBox().isSelected();
-			        	boolean isShowInfo=indexController.getMainActivity().getIsShowPictureInfoCheckBox().isSelected();
-						//調整後輸出到主頁面(不能自動刷新?)
-			        	indexController.getMainActivity().drawImageToPreviewPicturePanelWithSet(indexController.getMainActivity().activeImagePath,IndexController.screenSetWidth,IndexController.screenSetHeight,inputWidthSize/2,inputHeightSize/2,isBorder,isShowInfo);
-			        	//調整後輸出到投影(疊加)
-			        	indexController.getPlayActivity().playPictureWithSet(indexController.getMainActivity().activeImagePath,IndexController.screenSetWidth,IndexController.screenSetHeight,inputWidthSize,inputHeightSize,isBorder,isShowInfo);
-					}
-				});
-				button.setBounds(10, 135, 171, 57);
-				panel_2.add(button);
-				
-				JPanel panel_4 = new JPanel();
-				panel_4.setBorder(new TitledBorder(new LineBorder(new Color(67, 78, 84), 2, true), "\u908A\u6846\u8ABF\u6574", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
-				panel_4.setBounds(37, 23, 195, 165);
-				panel_3.add(panel_4);
-				panel_4.setLayout(null);
-				
 				JToggleButton toggleButton = new JToggleButton(Messages.getString("MainActivity.toggleButton.text")); //$NON-NLS-1$
+				toggleButton.setBounds(75, 106, 105, 34);
+				panel_2.add(toggleButton);
 				toggleButton.setFont(new Font("微軟正黑體", Font.BOLD, 16));
 				this.isCropButton=toggleButton;
 				toggleButton.addActionListener(new ActionListener() {
+
+					@Override
 					public void actionPerformed(ActionEvent arg0) {
-						/**
-						 * FIXME 自動裁剪
-						 */
+						// XXX 手動裁剪 調用投影按鈕,并開啟選框
+						boolean isSelected=((JToggleButton)arg0.getSource()).isSelected();
+						if(isSelected){
+							imageOutputAttributes.put(MainActivity.IMAGEOUTPUTATTRIBUTES_ISCUT,true);
+							leftCut.setIcon(new ImageIcon(MainActivity.class.getResource("/ico/leftCut.png")));
+							rightCut.setIcon(new ImageIcon(MainActivity.class.getResource("/ico/rightCut.png")));
+						}else{
+							leftCut.setIcon(null);
+							rightCut.setIcon(null);
+							imageOutputAttributes.put(MainActivity.IMAGEOUTPUTATTRIBUTES_ISCUT,false);
+						}
+						outputButton.doClick();
+						
+					}
+					/*public void actionPerformed(ActionEvent arg0) {
+						
+						 //FIXME 自動裁剪 採用修改文件的方式
+
 						boolean isSelected=((JToggleButton)arg0.getSource()).isSelected();
 						if(!isSelected){
 							JOptionPane.showMessageDialog(null,"若需取消裁剪,請從新打開文件", "注意", JOptionPane.WARNING_MESSAGE);
@@ -535,22 +566,77 @@ public class MainActivity extends JFrame {
 						indexController.getMainActivity().loadRawImage(new File(activeImagePath));
 						JOptionPane.showMessageDialog(null,"裁剪完畢", "注意", JOptionPane.WARNING_MESSAGE);
 						//裁剪后從新選擇并打開文件,新加一個load方法替換選擇文件后調用的方法,裁剪后調用load方法
-					}
+					}*/
 				});
-				toggleButton.setBounds(10, 37, 171, 40);
-				panel_4.add(toggleButton);
+				
+				JPanel panel_4 = new JPanel();
+				panel_4.setBorder(new TitledBorder(new LineBorder(new Color(67, 78, 84), 2, true), "\u7DDA\u6846\u8207\u80CC\u666F\u8ABF\u6574", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+				panel_4.setBounds(37, 170, 195, 176);
+				panel_3.add(panel_4);
+				panel_4.setLayout(null);
 				
 				JCheckBox checkBox = new JCheckBox(Messages.getString("MainActivity.checkBox.text_1")); //$NON-NLS-1$
 				this.isBorderCheckBox=checkBox;
 				checkBox.setFont(new Font("新細明體", Font.BOLD, 16));
-				checkBox.setBounds(10, 97, 171, 23);
+				checkBox.setBounds(10, 109, 171, 23);
 				panel_4.add(checkBox);
 				
 				JCheckBox checkBox_1 = new JCheckBox(Messages.getString("MainActivity.checkBox_1.text")); //$NON-NLS-1$
 				this.isShowPictureInfoCheckBox=checkBox_1;
 				checkBox_1.setFont(new Font("新細明體", Font.BOLD, 16));
-				checkBox_1.setBounds(10, 122, 171, 23);
+				checkBox_1.setBounds(10, 134, 171, 23);
 				panel_4.add(checkBox_1);
+				
+				JToggleButton toggleButton_1 = new JToggleButton(Messages.getString("MainActivity.toggleButton_1.text_1")); //$NON-NLS-1$
+				toggleButton_1.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						boolean isSelected=((JToggleButton)arg0.getSource()).isSelected();
+						if(isSelected){
+							imageOutputAttributes.put(IMAGEOUTPUTATTRIBUTES_ISGETEDGE, true);
+						}else{
+							imageOutputAttributes.put(IMAGEOUTPUTATTRIBUTES_ISGETEDGE, false);
+						}
+					}
+				});
+				toggleButton_1.setFont(new Font("微軟正黑體", Font.BOLD, 16));
+				toggleButton_1.setBounds(10, 20, 105, 34);
+				panel_4.add(toggleButton_1);
+				
+				JToggleButton toggleButton_2 = new JToggleButton(Messages.getString("MainActivity.toggleButton_2.text")); //$NON-NLS-1$
+				toggleButton_2.setFont(new Font("微軟正黑體", Font.BOLD, 16));
+				toggleButton_2.setBounds(10, 64, 105, 34);
+				panel_4.add(toggleButton_2);
+				
+				JButton button_1 = new JButton("");
+				button_1.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						Color color=new Color(200,200,200);
+						color=JColorChooser.showDialog(null,"请选择輪廓的颜色" ,color);  
+							if (color==null ) color=Color.lightGray; 
+							System.out.println(color.getBlue()+","+color.getGreen()+","+color.getBlue());
+							imageOutputAttributes.put(IMAGEOUTPUTATTRIBUTES_EDGECOLOR, color);
+					}
+				});
+				button_1.setIcon(new ImageIcon(MainActivity.class.getResource("/ico/paint32.png")));
+				button_1.setForeground(Color.BLACK);
+				button_1.setFont(new Font("新細明體", Font.BOLD, 16));
+				button_1.setBackground(new Color(210, 105, 30));
+				button_1.setBounds(125, 20, 56, 34);
+				panel_4.add(button_1);
+								
+				JButton button = new JButton(Messages.getString("MainActivity.button.text_1")); //$NON-NLS-1$
+				outputButton=button;
+				button.setBounds(47, 369, 171, 57);
+				panel_3.add(button);
+				button.setFont(new Font("新細明體", Font.BOLD, 16));
+				button.setIcon(new ImageIcon(MainActivity.class.getResource("/ico/play64.png")));
+				button.setForeground(new Color(0, 0, 0));
+				button.setBackground(new Color(210, 105, 30));
+				button.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						playPicture();
+					}
+				});
 				
 				tabbedPane.addTab("校準", new ImageIcon(MainActivity.class.getResource("/ico/player64.png")), preparedPanel, null);
 				preparedPanel.setLayout(null);
@@ -627,7 +713,71 @@ public class MainActivity extends JFrame {
 				aboutPanel.add(lblNewLabel_2);
 		
 	}
+	public void playPicture(){
+		String tureActiveImagePath=activeImagePath;
+		//是否處理圖片(尺寸不變)
+		if(imageOutputAttributes.get(IMAGEOUTPUTATTRIBUTES_ISGETEDGE) != null && (boolean)imageOutputAttributes.get(IMAGEOUTPUTATTRIBUTES_ISGETEDGE)){
+			tureActiveImagePath=OpenCVUtil.chageBackColorAndEdgeColorAndGetEdge(activeImagePath,(Color)imageOutputAttributes.get(IMAGEOUTPUTATTRIBUTES_EDGECOLOR), null);
+		}else{
+			tureActiveImagePath=activeImagePath;
+		}
+		
+		//投影儀尺寸
+		int playActivityHeight=indexController.getPlayActivity().getHeight();
+		int playActivityWidth=indexController.getPlayActivity().getWidth();
+		//最大輸出到地面尺寸 單位釐米 根據校準參數計算得到
+		double maxInputWidthSize = (playActivityWidth/800.0)*IndexController.screenSetWidth;
+		double maxInputHeightSize = (playActivityHeight/450.0)*IndexController.screenSetHeight;
+		//
+		boolean isWidthSelected = indexController.getMainActivity().getWidthCheckbox().isSelected();
+		boolean isHeightSelected = indexController.getMainActivity().getHeightCheckbox().isSelected();
 
+		String info="";
+		info+="投影儀器尺寸為:"+playActivityWidth+","+playActivityHeight;
+		info+="\r\n最大輸出到地面尺寸為:"+Math.round((maxInputWidthSize*10))/10.0+"cm,"+Math.round((maxInputHeightSize*10))/10.0+"cm ";
+		info+="\r\n校準參數為:"+IndexController.screenSetWidth+"cm,"+IndexController.screenSetHeight+"cm";
+		info+="\r\n(800*450對應的實際尺寸)";
+		double inputWidthSize=0;
+		double inputHeightSize=0;
+		try {
+			//用戶輸入的尺寸 單位釐米
+			inputWidthSize= Double.parseDouble(indexController.getMainActivity().getTextField().getText());
+			inputHeightSize= Double.parseDouble(indexController.getMainActivity().getTextField_1().getText());
+		} catch (Exception e) {
+			Toolkit.getDefaultToolkit().beep();
+			JOptionPane.showMessageDialog(null, indexController.getMainActivity().getTextField().getText()+","+indexController.getMainActivity().getTextField_1().getText()+"  不是一組合法的寬高值,請檢查輸入尺寸,數字或小數,單位釐米!","請檢查輸入", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+		if(inputWidthSize>maxInputWidthSize||inputHeightSize>maxInputHeightSize){
+			Toolkit.getDefaultToolkit().beep();
+			JOptionPane.showMessageDialog(null, info, "輸入尺寸過大!", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+		boolean isBorder=indexController.getMainActivity().getIsBorderCheckBox().isSelected();
+    	boolean isShowInfo=indexController.getMainActivity().getIsShowPictureInfoCheckBox().isSelected();
+		if(null!=imageOutputAttributes.get(MainActivity.IMAGEOUTPUTATTRIBUTES_ISCUT) && (boolean) imageOutputAttributes.get(MainActivity.IMAGEOUTPUTATTRIBUTES_ISCUT)){
+			Image activeImage = FileService.getImage(tureActiveImagePath);
+			//計算輸出尺寸
+			Dimension outputSize = FileService.getOutputSize(activeImage, IndexController.screenSetWidth,IndexController.screenSetHeight, inputWidthSize/2, inputHeightSize/2);
+			//計算截取位置 百分比坐標*圖片實際尺寸,傳遞給playpicture展示
+			int[] locationMouse=(int[]) imageOutputAttributes.get(MainActivity.IMAGEOUTPUTATTRIBUTES_CUTLOCATION);
+			//int[] resultLocation=new int[4];
+			locationMouse[0]=(int) (Math.round(activeImage.getWidth(null)*(locationMouse[0]/outputSize.getWidth()))-1);
+			locationMouse[2]=(int) (Math.round(activeImage.getWidth(null)*(locationMouse[2]/outputSize.getWidth()))-1);
+			locationMouse[1]=(int) (Math.round(activeImage.getHeight(null)*(locationMouse[1]/outputSize.getHeight()))-1);
+			locationMouse[3]=(int) (Math.round(activeImage.getHeight(null)*(locationMouse[3]/outputSize.getHeight()))-1);
+			indexController.getMainActivity().drawImageToPreviewPicturePanelWithSet(tureActiveImagePath,IndexController.screenSetWidth,IndexController.screenSetHeight,inputWidthSize/2,inputHeightSize/2,isBorder,isShowInfo);
+			imageOutputAttributes.put(IMAGEOUTPUTATTRIBUTES_ISBORDER, isBorder);
+			imageOutputAttributes.put(IMAGEOUTPUTATTRIBUTES_ISSHOWINFO, isShowInfo);
+			indexController.getPlayActivity().playPictureWithSet(tureActiveImagePath,IndexController.screenSetWidth,IndexController.screenSetHeight,inputWidthSize,inputHeightSize,imageOutputAttributes);
+			
+		}else{
+			//調整後輸出到主頁面(不能自動刷新?)
+			indexController.getMainActivity().drawImageToPreviewPicturePanelWithSet(tureActiveImagePath,IndexController.screenSetWidth,IndexController.screenSetHeight,inputWidthSize/2,inputHeightSize/2,isBorder,isShowInfo);
+			//調整後輸出到投影(疊加)
+			indexController.getPlayActivity().playPictureWithSet(tureActiveImagePath,IndexController.screenSetWidth,IndexController.screenSetHeight,inputWidthSize,inputHeightSize,isBorder,isShowInfo);
+		}		
+	}
 	public MainActivity(GraphicsConfiguration gc) {
 		super(gc);
 	}
@@ -694,5 +844,8 @@ public class MainActivity extends JFrame {
 	}
 	public JPanel getAboutPanel() {
 		return aboutPanel;
+	}
+	public HashMap<String, Object> getImageOutputAttributes() {
+		return imageOutputAttributes;
 	}
 }

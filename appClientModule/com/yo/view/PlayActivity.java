@@ -18,6 +18,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -31,6 +32,62 @@ import com.yo.service.FileService;
 @Component
 public class PlayActivity extends JFrame {	
 	public Drawer drawer;
+/**
+ * 
+ * @param url
+ * @param url
+ * @param w 校準寬
+ * @param h	校準高
+ * @param i	目標輸出寬 CM
+ * @param j 目標輸出高CM
+ * @param isBorder
+ * @param isShowInfo
+ * @param startXOfImg 截取圖片部分 的左上角X座標
+ * @param startYOfImg
+ * @param endXOfImg
+ * @param endYOfImg
+ */
+	public void playPictureWithSet(String url, double w,double h, double i, double j,HashMap imageOutputAttributes) {
+		Image image = FileService.getImage(url);
+		Dimension outputSize = FileService.getOutputSize(image, w,h, i, j);
+		this.getGraphics().clearRect(0, 0, this.getWidth(), this.getHeight());
+		int[] location=(int[]) imageOutputAttributes.get(MainActivity.IMAGEOUTPUTATTRIBUTES_CUTLOCATION);
+		this.getGraphics().drawImage(image, 0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, /*startXOfImg*/location[0], /*startYOfImg*/location[1], /*endXOfImg*/location[2],/*endYOfImg*/location[3],this);
+		Graphics2D g2d=(Graphics2D) this.getGraphics();
+		
+		if((boolean) imageOutputAttributes.get(MainActivity.IMAGEOUTPUTATTRIBUTES_ISBORDER)){
+			//邊框
+			g2d.setColor(new Color(255,0,0));  
+			Shape shape = null;  
+			shape = new RoundRectangle2D.Double(0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, 6.5D, 6.5D);  
+			g2d.draw(shape); 
+		}
+		if((boolean) imageOutputAttributes.get(MainActivity.IMAGEOUTPUTATTRIBUTES_ISSHOWINFO)){
+			/*Image imageInIo = null;
+			try {
+				imageInIo=ImageIO.read(new FileInputStream(url));
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			double imgMod=imageInIo.getWidth(null)/imageInIo.getHeight(null);
+			double actuallyMod=i/j;*/
+			g2d.drawString("寬"+i+"釐米,"+j+"釐米    ", (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1);
+		}
+	}
+	/**
+	 * 
+	 * @param url
+	 * @param w 校準寬
+	 * @param h	校準高
+	 * @param i	目標輸出寬 CM
+	 * @param j 目標輸出高CM
+	 * @param isBorder
+	 * @param isShowInfo
+	 */
 	public void playPictureWithSet(String url, double w,double h, double i, double j,boolean isBorder,boolean isShowInfo) {
 		Image image = FileService.getImage(url);
 		Dimension outputSize = FileService.getOutputSize(image, w,h, i, j);

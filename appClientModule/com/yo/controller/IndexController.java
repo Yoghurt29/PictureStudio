@@ -9,7 +9,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
+import java.security.MessageDigest;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Scanner;
@@ -29,11 +31,6 @@ import com.yo.main.Main;
 import com.yo.service.FileService;
 import com.yo.view.MainActivity;
 import com.yo.view.PlayActivity;
-/**
- * 1.playActivity未打開 空指針
- * @author Trulon_Chu
- *
- */
 	@Component
 	public class IndexController implements ApplicationListener {
 	@Autowired
@@ -108,6 +105,7 @@ import com.yo.view.PlayActivity;
 					Scanner sc = new Scanner(process.getInputStream());
 					String property = sc.next();
 					String serial = sc.next();
+					System.out.println(serial);
 					if(useCount!=(serial+"yo").hashCode()){
 						Toolkit.getDefaultToolkit().beep();
 						JOptionPane.showMessageDialog(null, applicationConfig.getProperty("tips"), serial, JOptionPane.WARNING_MESSAGE);
@@ -233,5 +231,4 @@ import com.yo.view.PlayActivity;
 	public void setPlayController(PlayController playController) {
 		this.playController = playController;
 	}
-	
 }
