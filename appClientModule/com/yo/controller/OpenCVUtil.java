@@ -29,12 +29,13 @@ public class OpenCVUtil {
 		Mat mat3 = colorReplace(mat2,null,null);
 		Imgcodecs.imwrite("D:/PictureStudio/ai_replaseColor.bmp", mat3);
 	}
-	public static String chageBackColorAndEdgeColorAndGetEdge(String inputPath,Color edgeColor,Color backColor){
+	public static String chageBackColorAndEdgeColorAndGetEdge(String inputPath,Color edgeColor,Color backColor,int lineWidth){
 		Mat matIn = Imgcodecs.imread(inputPath);
 		Mat mat1 = doCanny(matIn);
-		Mat mat2 = colorReplace(mat1,edgeColor,backColor);
 		//加粗
-		Mat mat3=boldPoint(mat2, 4);
+		Mat mat2=boldPoint(mat1, lineWidth);
+		//替換背景色和前景色
+		Mat mat3 = colorReplace(mat2,edgeColor,backColor);
 		Imgcodecs.imwrite(inputPath+OpenCVUtil.PROCESS_CHAGEBACKCOLORANDEDGECOLORANDGETEDGE, mat3);
 		return inputPath+OpenCVUtil.PROCESS_CHAGEBACKCOLORANDEDGECOLORANDGETEDGE;
 	}
@@ -96,15 +97,15 @@ public class OpenCVUtil {
     			double[] data = imgSrc.get(y,x);
     			if(data[0]==0&&data[1]==0&&data[2]==0){
     				if(null!=backColor){
-    					data[0]=backColor.getRed();
+    					data[2]=backColor.getRed();
     					data[1]=backColor.getGreen();
-    					data[2]=backColor.getBlue();
+    					data[0]=backColor.getBlue();
     				}
     			}else{
     				if(null!=edgeColor){
-    					data[0]=edgeColor.getRed();
+    					data[2]=edgeColor.getRed();
     					data[1]=edgeColor.getGreen();
-    					data[2]=edgeColor.getBlue();
+    					data[0]=edgeColor.getBlue();
     				}
     			}
     			imgSrc.put(y,x,data);
@@ -135,7 +136,13 @@ public class OpenCVUtil {
     		int x=ds[1];
 			for(int iy=y-lineWidth;iy<=y+lineWidth;iy++){
 				for(int ix=x-lineWidth;ix<=x+lineWidth;ix++){
-					imgSrc.put(iy,ix,points.get(ds));
+					try {
+						if(iy<imgSrc.height()&&ix<imgSrc.width()&&iy>0&&ix>0)
+						imgSrc.put(iy,ix,points.get(ds));
+					} catch (Exception e) {
+						System.out.println("跳过边缘点!");
+						e.printStackTrace();
+					}
 				}
 			}
 		}

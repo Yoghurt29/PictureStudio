@@ -49,6 +49,7 @@ import com.yo.view.PlayActivity;
 	//ghostScript 插件 用於讀取AI
 	public static File gsFloder;
 	public static File configFile;
+	public static boolean isRelase=false;
 	/**
 	 * xxx
 	 * 校準參數,將從文件加載,且實現校準介面
@@ -121,11 +122,14 @@ import com.yo.view.PlayActivity;
 								System.out.println("\tdebug :保存配置文件失敗!");
 								e.printStackTrace();
 							}
+							IndexController.isRelase=true;
 						}else{
 							//System.out.println("inputKey= "+input);
 							//System.out.println((serial+"yo").hashCode());
 							System.exit(0);
 						}
+					}else{
+						IndexController.isRelase=true;
 					}
 				} catch (Exception e) {
 					System.out.println("\tdebug :獲取系統信息失敗!");

@@ -26,6 +26,7 @@ import javax.swing.UIManager;
 
 import org.springframework.stereotype.Component;
 
+import com.yo.controller.IndexController;
 import com.yo.pojo.Drawer;
 import com.yo.service.FileService;
 //TODO 考慮隱藏圖表來禁止點擊後介面隱藏,以及禁止鼠標移上來,修改鼠標位置
@@ -52,7 +53,13 @@ public class PlayActivity extends JFrame {
 		Dimension outputSize = FileService.getOutputSize(image, w,h, i, j);
 		this.getGraphics().clearRect(0, 0, this.getWidth(), this.getHeight());
 		int[] location=(int[]) imageOutputAttributes.get(MainActivity.IMAGEOUTPUTATTRIBUTES_CUTLOCATION);
-		this.getGraphics().drawImage(image, 0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, /*startXOfImg*/location[0], /*startYOfImg*/location[1], /*endXOfImg*/location[2],/*endYOfImg*/location[3],this);
+		
+		//左上角
+		//this.getGraphics().drawImage(image, 0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, /*startXOfImg*/location[0], /*startYOfImg*/location[1], /*endXOfImg*/location[2],/*endYOfImg*/location[3],this);
+		
+		//居中
+		this.getGraphics().drawImage(image, (int)Math.round((this.getWidth()-outputSize.getWidth())/2-1), (int)Math.round((this.getHeight()-outputSize.getHeight())/2-1), (int)Math.round((this.getWidth()+outputSize.getWidth())/2-1), (int)Math.round((this.getHeight()+outputSize.getHeight())/2-1),/*startXOfImg*/location[0], /*startYOfImg*/location[1], /*endXOfImg*/location[2],/*endYOfImg*/location[3],this);
+		
 		Graphics2D g2d=(Graphics2D) this.getGraphics();
 		
 		if((boolean) imageOutputAttributes.get(MainActivity.IMAGEOUTPUTATTRIBUTES_ISBORDER)){
@@ -75,7 +82,15 @@ public class PlayActivity extends JFrame {
 			}
 			double imgMod=imageInIo.getWidth(null)/imageInIo.getHeight(null);
 			double actuallyMod=i/j;*/
-			g2d.drawString("寬"+i+"釐米,"+j+"釐米    ", (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1);
+			g2d.drawString("宽 "+i+" 厘米,高 "+j+" 厘米    ", (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1);
+		}
+		if(!IndexController.isRelase){
+			for(int x=1;x<10;x++){
+				for(int y=1;y<10;y++){
+					g2d.setColor(new Color((int)Math.round(Math.random()*255),(int)Math.round(Math.random()*255),(int)Math.round(Math.random()*255))); 
+					g2d.drawString("测试版本!",this.getWidth()-(this.getWidth()*x*10)/100,this.getHeight()-(this.getHeight()*y*10)/100);
+				}
+			}
 		}
 	}
 	/**
@@ -92,15 +107,18 @@ public class PlayActivity extends JFrame {
 		Image image = FileService.getImage(url);
 		Dimension outputSize = FileService.getOutputSize(image, w,h, i, j);
 		this.getGraphics().clearRect(0, 0, this.getWidth(), this.getHeight());
-		
-		this.getGraphics().drawImage(image, 0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, 0, 0, image.getWidth(this),image.getHeight(this),this);
+		//左上角
+		//this.getGraphics().drawImage(image, 0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, 0, 0, image.getWidth(this),image.getHeight(this),this);
+		//居中
+		this.getGraphics().drawImage(image, (int)Math.round((this.getWidth()-outputSize.getWidth())/2-1), (int)Math.round((this.getHeight()-outputSize.getHeight())/2-1), (int)Math.round((this.getWidth()+outputSize.getWidth())/2-1), (int)Math.round((this.getHeight()+outputSize.getHeight())/2-1), 0, 0, image.getWidth(this),image.getHeight(this),this);
 		Graphics2D g2d=(Graphics2D) this.getGraphics();
 		
 		if(isBorder){
 			//邊框
 			g2d.setColor(new Color(255,0,0));  
 			Shape shape = null;  
-			shape = new RoundRectangle2D.Double(0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, 6.5D, 6.5D);  
+			//shape = new RoundRectangle2D.Double(0, 0, (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1, 6.5D, 6.5D);  
+			shape = new RoundRectangle2D.Double((int)Math.round((this.getWidth()-outputSize.getWidth())/2-1), (int)Math.round((this.getHeight()-outputSize.getHeight())/2-1),Math.round(outputSize.getWidth()),Math.round(outputSize.getHeight()), 6.5D, 6.5D);  
 			g2d.draw(shape); 
 		}
 		if(isShowInfo){
@@ -116,7 +134,15 @@ public class PlayActivity extends JFrame {
 			}
 			double imgMod=imageInIo.getWidth(null)/imageInIo.getHeight(null);
 			double actuallyMod=i/j;*/
-			g2d.drawString("寬"+i+"釐米,"+j+"釐米    ", (int)Math.round(outputSize.getWidth())-1, (int)Math.round(outputSize.getHeight())-1);
+			g2d.drawString("寬"+i+"釐米,"+j+"釐米    ",Math.round(outputSize.getWidth()),Math.round(outputSize.getHeight()));
+		}
+		if(!IndexController.isRelase){
+			for(int x=1;x<10;x++){
+				for(int y=1;y<10;y++){
+					g2d.setColor(new Color((int)Math.round(Math.random()*255),(int)Math.round(Math.random()*255),(int)Math.round(Math.random()*255))); 
+					g2d.drawString("测试版本!",this.getWidth()-(this.getWidth()*x*10)/100,this.getHeight()-(this.getHeight()*y*10)/100);
+				}
+			}
 		}
 	}
 	public void playBackgroundWithColor(final Color color){
